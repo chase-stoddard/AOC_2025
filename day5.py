@@ -1,63 +1,46 @@
 def read_instructions():
-    range_strings = []
-    with open('input/day5.txt', "r") as f:
-        for line in f:
-            line = line.strip()
-            if line == "":
-                break
-            range_strings.append(line)
-    return range_strings
+    with open('input/day4.txt', "r") as f:
+        return f.read().strip().splitlines()
     
 
-# def parse_instructions(instructions):
-#     ranges = []
-#     ids = []
-#     in_id_section = False
+grid = [list(row) for row in read_instructions()]
 
-#     for instruction in instructions:
-#         if instruction == "":
-#             in_id_section = True
-#             continue
-        
-#         if not in_id_section:
-#             ranges.append(instruction)
+rows = len(grid)
+cols = len(grid[0])
 
+dirs = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1),  (1, 0), (1, 1)]
 
-#     return ranges
+result = [[0] * cols for _ in range(rows)]
 
+total_removed = 0
 
-def parse_range(r):
-    a, b = r.split("-")
-    return int(a), int(b)
+def count_adjacent(r, c):
+    count = 0
+    for dr, dc in dirs:
+        nr, nc = r + dr, c + dc
+        if 0 <= nr < rows and 0 <= nc < cols:
+            if grid[nr][nc] == '@':
+                count += 1
+    return count
 
+def mark_cells():
+    to_mark= []
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == '@':
+                if count_adjacent(r, c) < 4:
+                    to_mark.append((r, c))
 
-# def id_in_range(id, ranges):
-#     for r in ranges:
-#         low, high = parse_range(r)
-#         if low <= id <= high:
-#             return True
-#     return False
+    for r, c in to_mark:
+        grid[r][c] = 'x'
 
-def merge_ranges(ranges):
-    ranges = sorted(ranges, key=lambda x: (x[0], x[1]))
-    merged = []
-    for low, high in ranges:
-        if not merged or low > merged[-1][1] + 1:
-            merged.append([low, high])
-        else:
-            merged[-1][1] = max(merged[-1][1], high)
-    return merged
+    return len(to_mark)
 
 
-def all_ids_in_ranges(range_strings):
-    ranges = [parse_range(r) for r in range_strings]
-    merged = merge_ranges(ranges)
-    total = sum(high - low + 1 for low, high in merged)
-    return merged, total
+while True:
+    removed = mark_cells()
+    if removed == 0:
+        break
+    total_removed += removed
 
-
-instructions = read_instructions()
-merged, total = all_ids_in_ranges(instructions)
-
-#print("Merged ranges:", merged)
-print("Total unique IDs:", total)
+print(total_removed)

@@ -1,46 +1,64 @@
 def read_instructions():
-    with open('input/day4.txt', "r") as f:
-        return f.read().strip().splitlines()
-    
-
-grid = [list(row) for row in read_instructions()]
-
-rows = len(grid)
-cols = len(grid[0])
-
-dirs = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1),  (1, 0), (1, 1)]
-
-result = [[0] * cols for _ in range(rows)]
-
-total_removed = 0
-
-def count_adjacent(r, c):
-    count = 0
-    for dr, dc in dirs:
-        nr, nc = r + dr, c + dc
-        if 0 <= nr < rows and 0 <= nc < cols:
-            if grid[nr][nc] == '@':
-                count += 1
-    return count
-
-def mark_cells():
-    to_mark= []
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == '@':
-                if count_adjacent(r, c) < 4:
-                    to_mark.append((r, c))
-
-    for r, c in to_mark:
-        grid[r][c] = 'x'
-
-    return len(to_mark)
+    with open("input/day4.txt") as f:
+        lines = [line.rstrip("\n") for line in f]
+    grid = [list(line) for line in lines]
+    width = max(len(row) for row in grid)
+    for row in grid:
+        row.extend(" " * (width - len(row)))
+    columns = list(zip(*grid))
+    return columns
 
 
-while True:
-    removed = mark_cells()
-    if removed == 0:
-        break
-    total_removed += removed
+def split_problems(columns):
+    problems = []
+    current = []
+    for col in reversed(columns):
+        if all(c == " " for c in col):
+            if current:
+                problems.append(list(current))
+                current = []
+        else:
+            current.append(col)
+    if current:
+        problems.append(list(current))
+    return problems
 
-print(total_removed)
+
+def parse_problem(cols):
+    digit_cols = [col for col in cols if not all(c == ' ' for c in col)]
+    if not digit_cols:
+        return [], None
+    bottom_row = digit_cols[-1][-1]
+    operator = bottom_row.strip()
+    numbers = []
+    for col in digit_cols:
+        digits = col[:][:]
+        digit_str = "".join(d for d in digits if d.isdigit())
+        if digit_str:
+            numbers.append(int(digit_str))
+    print("Parsed numbers:", numbers, "operator:", operator, "digit_cols:", digit_cols)
+    return numbers, operator
+
+
+def perform_math(numbers, op):
+    if op == '+':
+        total = sum(numbers)
+    elif op == '*':
+        total = 1
+        for n in numbers:
+            total *= n
+    else:
+        print(f"Operator raw: '{op}'")
+        raise ValueError("Bad operator")
+    return total
+
+
+columns = read_instructions()
+problems = split_problems(columns)
+grand_total = 0
+for prob in problems:
+    nums, op = parse_problem(prob)
+    result = perform_math(nums, op)
+    print(nums, op, "=", result)
+    grand_total += result
+print("Grand total =", grand_total)
